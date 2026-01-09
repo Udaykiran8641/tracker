@@ -3,25 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Batch-Wise Unit Traceability</title>
+    <title>Office-Sync Unit Traceability</title>
     <style>
-        :root { --primary: #004a99; --success: #28a745; --danger: #dc3545; --bg: #f0f2f5; --text: #2d3436; }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; }
-        .container { max-width: 1200px; margin: auto; }
-        header { background: var(--primary); color: white; padding: 20px; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center; }
-        .main-grid { display: grid; grid-template-columns: 380px 1fr; gap: 20px; margin-top: 20px; }
-        .card { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); height: fit-content; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.85em; color: #555; }
-        input, select { width: 100%; padding: 12px; margin-bottom: 15px; border: 2px solid #dfe6e9; border-radius: 6px; font-size: 15px; box-sizing: border-box; }
-        .btn-submit { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        .feedback { padding: 12px; margin-top: 15px; border-radius: 6px; display: none; font-size: 0.9em; font-weight: bold; }
+        :root {
+            --primary: #004a99;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --bg: #f0f2f5;
+            --text: #2d3436;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container { max-width: 1100px; margin: auto; }
+
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 20px;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border-bottom: 4px solid var(--primary);
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+        }
+
+        .scanner-card {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+
+        label { display: block; font-weight: bold; margin-bottom: 8px; font-size: 0.9em; }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 2px solid #dfe6e9;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 15px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-download {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .feedback {
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 6px;
+            display: none;
+            font-weight: bold;
+        }
+
         .error { background: #fab1a0; color: #ae3c33; display: block; border-left: 5px solid var(--danger); }
         .success { background: #b8e994; color: #3b7d23; display: block; border-left: 5px solid var(--success); }
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; }
-        th { text-align: left; padding: 12px; background: #f8f9fa; border-bottom: 2px solid #dee2e6; font-size: 0.85em; }
-        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 0.9em; }
-        .badge-batch { background: #636e72; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75em; }
-        .badge-stage { background: #e9ecef; color: var(--primary); padding: 4px 8px; border-radius: 4px; font-weight: bold; }
+
+        .table-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { text-align: left; padding: 12px; background: #f8f9fa; border-bottom: 2px solid #dee2e6; }
+        td { padding: 12px; border-bottom: 1px solid #eee; }
+        
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            background: #e9ecef;
+            font-weight: bold;
+        }
+
+        .sync-indicator { font-size: 12px; color: #636e72; text-align: right; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -29,53 +135,61 @@
 <div class="container">
     <header>
         <div>
-            <h2 style="margin:0;">Module Testing Control</h2>
-            <span id="syncStatus">Connected to Cloud Database</span>
+            <h2 style="margin:0;">Office-Sync Tracker</h2>
+            <span>Connected to Shared Google Database</span>
         </div>
-        <button onclick="downloadCSV()" style="background:var(--success); color:white; border:none; padding:10px 15px; border-radius:4px; cursor:pointer;">Export Batch Data</button>
+        <button onclick="downloadCSV()" class="btn-download">Download Backup CSV</button>
     </header>
 
+    <div class="status-summary">
+        <div class="stat-card">
+            <label>Total Units</label>
+            <div id="count-total" style="font-size: 24px; font-weight: bold;">0</div>
+        </div>
+        <div class="stat-card" style="border-color: var(--warning);">
+            <label>In Testing</label>
+            <div id="count-testing" style="font-size: 24px; font-weight: bold;">0</div>
+        </div>
+        <div class="stat-card" style="border-color: var(--success);">
+            <label>Completed</label>
+            <div id="count-ready" style="font-size: 24px; font-weight: bold;">0</div>
+        </div>
+    </div>
+
     <div class="main-grid">
-        <div class="card">
-            <h3>Unit Entry</h3>
-            
-            <label>BATCH NAME</label>
-            <input type="text" id="batchInput" placeholder="e.g. BATCH-2024-01">
+        <div class="scanner-card">
+            <h3>Unit Check-In</h3>
+            <label for="snInput">SERIAL NUMBER</label>
+            <input type="text" id="snInput" placeholder="Scan here..." autofocus>
 
-            <label>SERIAL NUMBER</label>
-            <input type="text" id="snInput" placeholder="Scan Module SN..." autofocus>
-
-            <label>CURRENT TEST STAGE</label>
+            <label for="stageSelect">TEST STAGE</label>
             <select id="stageSelect">
-                <option value="0">01. Receiving (Entry)</option>
+                <option value="0">01. Receiving</option>
                 <option value="1">02. Programming</option>
-                <option value="2">03. Pre-Vibration Group A Test</option>
-                <option value="3">04. Vibration 1 Test</option>
-                <option value="4">05. Post-Vibration Group A Test 1</option>
-                <option value="5">06. 24h Thermal Cycling Test</option>
-                <option value="6">07. Post-Thermal Cycling Group A Test</option>
-                <option value="7">08. Vibration 2 Test</option>
-                <option value="8">09. Post-Vibration Test 2 Group A Test</option>
+                <option value="2">03. Group A (Pre-Vib 1)</option>
+                <option value="3">04. Vibration 1</option>
+                <option value="4">05. Group A (Post-Vib 1)</option>
+                <option value="5">06. 24h Thermal Cycling</option>
+                <option value="6">07. Group A (Post-Thermal)</option>
+                <option value="7">08. Vibration 2</option>
+                <option value="8">09. Group A (Post-Vib 2)</option>
                 <option value="9">10. ATP Test</option>
                 <option value="10">11. Offer to Engineering</option>
             </select>
 
-            <button id="submitBtn" class="btn-submit" onclick="processUnit()">LOG TEST RESULT</button>
+            <button id="submitBtn" class="btn-submit" onclick="processUnit()">SUBMIT TO CLOUD</button>
             <div id="feedback" class="feedback"></div>
+            <div id="syncTime" class="sync-indicator">Last Synced: Never</div>
         </div>
 
-        <div class="card" style="padding:0;">
-            <div style="padding:20px;">
-                <h3 style="margin:0;">Active Batch Tracking</h3>
-                <input type="text" id="searchBar" onkeyup="filterTable()" placeholder="Search Serial or Batch..." style="margin-top:15px; margin-bottom:0;">
-            </div>
+        <div class="table-container">
+            <h3>Live Office-Wide Data</h3>
             <table>
                 <thead>
                     <tr>
-                        <th>Batch</th>
                         <th>Serial No.</th>
                         <th>Current Stage</th>
-                        <th>History Trail</th>
+                        <th>History</th>
                         <th>Status</th>
                     </tr>
                 </thead>
@@ -86,113 +200,145 @@
 </div>
 
 <script>
-    const APP_URL = "https://script.google.com/macros/s/AKfycbwQAc6XSAaUihAAVdHEJ8LRAXUVtvn8ZUYmWO866KVY-j2p1qX6_qIslBFBg3slqJd2/exec"; 
+    // --- CONFIGURATION ---
+    const APP_URL = "PASTE_YOUR_GOOGLE_SCRIPT_URL_HERE"; 
     
     const STAGES = [
-        "Receiving", "Programming", "Pre-Vib Group A", "Vibration 1", 
-        "Post-Vib Group A 1", "24h Thermal Cycling", "Post-Thermal Group A", 
-        "Vibration 2", "Post-Vib 2 Group A", "ATP Test", "Engineering Offer"
+        "Receiving", "Programming", "Group A (1)", "Vibration 1", 
+        "Group A (2)", "Thermal Cycling", "Group A (3)", 
+        "Vibration 2", "Group A (4)", "ATP Test", "Offered to Engineering"
     ];
 
     let unitDatabase = {};
 
+    // Initial load from Cloud
     window.onload = refreshFromCloud;
-    setInterval(refreshFromCloud, 30000); // Auto-sync every 30s
+
+    // Auto-refresh from cloud every 20 seconds
+    setInterval(refreshFromCloud, 20000);
 
     async function processUnit() {
-        const batch = document.getElementById('batchInput').value.trim().toUpperCase();
-        const sn = document.getElementById('snInput').value.trim().toUpperCase();
-        const stageIdx = parseInt(document.getElementById('stageSelect').value);
+        const snInput = document.getElementById('snInput');
         const submitBtn = document.getElementById('submitBtn');
+        const stageIdx = parseInt(document.getElementById('stageSelect').value);
+        const sn = snInput.value.trim().toUpperCase();
 
-        if (!batch || !sn) return showFeedback("Enter Batch and Serial Number", "error");
+        if (!sn) return showFeedback("Enter Serial Number", "error");
 
-        // Sequence Validation Logic
+        // Sequence Validation
         let lastIdx = unitDatabase[sn] ? unitDatabase[sn].currentStage : -1;
         if (lastIdx === -1 && stageIdx !== 0) {
-            return showFeedback("New units must start at Receiving", "error");
+            return showFeedback("Error: New units start at Receiving", "error");
         } else if (lastIdx !== -1 && stageIdx !== lastIdx + 1) {
-            return showFeedback(`Sequence Error! Next step is: ${STAGES[lastIdx+1]}`, "error");
+            return showFeedback(`Sequence Breach! Next: ${STAGES[lastIdx+1]}`, "error");
+        } else if (lastIdx !== -1 && stageIdx <= lastIdx) {
+            return showFeedback("Already Completed", "error");
         }
 
+        // Prepare History
         let historyArray = unitDatabase[sn] ? [...unitDatabase[sn].history] : [];
         historyArray.push(STAGES[stageIdx]);
         
         const payload = {
-            batch: batch,
             sn: sn,
             stage: STAGES[stageIdx],
-            history: historyArray.join(" -> "),
-            status: stageIdx === 10 ? "✅ Ready" : "⏳ In Progress"
+            history: historyArray.join(" → "),
+            status: stageIdx === 10 ? "✅ Done" : "⏳ Testing"
         };
 
+        // UI Feedback
         submitBtn.disabled = true;
-        showFeedback("Syncing with Cloud...", "success");
+        submitBtn.innerText = "Syncing...";
+        showFeedback("Connecting to Google Sheets...", "success");
 
         try {
-            await fetch(APP_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(payload) });
-            showFeedback("Unit Updated Successfully", "success");
-            document.getElementById('snInput').value = "";
-            document.getElementById('snInput').focus();
-            setTimeout(refreshFromCloud, 1000);
-        } catch (e) {
-            showFeedback("Connection Error", "error");
+            await fetch(APP_URL, {
+                method: "POST",
+                mode: "no-cors", // Required for Google Scripts
+                body: JSON.stringify(payload)
+            });
+            
+            showFeedback("Success: Cloud Updated", "success");
+            snInput.value = "";
+            snInput.focus();
+            
+            // Immediately refresh to show own update
+            setTimeout(refreshFromCloud, 1000); 
+        } catch (err) {
+            showFeedback("Cloud Error: Check Internet", "error");
         } finally {
             submitBtn.disabled = false;
+            submitBtn.innerText = "SUBMIT TO CLOUD";
         }
     }
 
     async function refreshFromCloud() {
         try {
             const response = await fetch(APP_URL);
-            const data = await response.json();
+            const cloudData = await response.json();
+            
             unitDatabase = {};
-            const tbody = document.getElementById('unitTableBody');
-            tbody.innerHTML = "";
-
-            for (let i = 1; i < data.length; i++) {
-                const row = data[i];
-                unitDatabase[row[1]] = { currentStage: STAGES.indexOf(row[2]), history: row[3].split(" -> ") };
-                
-                tbody.innerHTML += `<tr>
-                    <td><span class="badge-batch">${row[0]}</span></td>
-                    <td><b>${row[1]}</b></td>
-                    <td><span class="badge-stage">${row[2]}</span></td>
-                    <td><small>${row[3]}</small></td>
-                    <td>${row[4]}</td>
-                </tr>`;
+            // Start at 1 to skip headers
+            for (let i = 1; i < cloudData.length; i++) {
+                const row = cloudData[i];
+                unitDatabase[row[0]] = {
+                    currentStage: STAGES.indexOf(row[1]),
+                    history: row[2].split(" → "),
+                    status: row[3]
+                };
             }
-        } catch (e) { console.log("Sync Error"); }
+            updateTable();
+            document.getElementById('syncTime').innerText = "Last Synced: " + new Date().toLocaleTimeString();
+        } catch (e) {
+            console.log("Auto-sync failed. Offline mode.");
+        }
+    }
+
+    function updateTable() {
+        const tbody = document.getElementById('unitTableBody');
+        tbody.innerHTML = "";
+        const units = Object.entries(unitDatabase).reverse();
+
+        let total = 0, ready = 0;
+
+        units.forEach(([sn, data]) => {
+            total++;
+            const isDone = data.currentStage === 10;
+            if (isDone) ready++;
+            
+            const row = `<tr>
+                <td><strong>${sn}</strong></td>
+                <td><span class="badge">${STAGES[data.currentStage]}</span></td>
+                <td><small>${data.history.join(" → ")}</small></td>
+                <td>${isDone ? "✅ Done" : "⏳ Testing"}</td>
+            </tr>`;
+            tbody.innerHTML += row;
+        });
+
+        document.getElementById('count-total').innerText = total;
+        document.getElementById('count-ready').innerText = ready;
+        document.getElementById('count-testing').innerText = total - ready;
     }
 
     function showFeedback(msg, type) {
         const f = document.getElementById('feedback');
-        f.innerText = msg; f.className = `feedback ${type}`;
-        if (type === "success") setTimeout(() => f.className = "feedback", 3000);
-    }
-
-    function filterTable() {
-        const input = document.getElementById("searchBar").value.toUpperCase();
-        const tr = document.getElementById("unitTableBody").getElementsByTagName("tr");
-        for (let i = 0; i < tr.length; i++) {
-            tr[i].style.display = tr[i].innerText.toUpperCase().includes(input) ? "" : "none";
-        }
+        f.innerText = msg;
+        f.className = `feedback ${type}`;
+        if (type === "success") setTimeout(() => f.className = "feedback", 4000);
     }
 
     function downloadCSV() {
-        let csv = "Batch,Serial Number,Stage,History,Status\n";
-        const rows = document.getElementById("unitTableBody").getElementsByTagName("tr");
-        for (let r of rows) {
-            let cols = r.querySelectorAll("td");
-            csv += Array.from(cols).map(c => `"${c.innerText}"`).join(",") + "\n";
-        }
+        let csv = "Serial Number,Stage,History,Status\n";
+        Object.entries(unitDatabase).forEach(([sn, d]) => {
+            csv += `${sn},${STAGES[d.currentStage]},"${d.history.join(" | ")}",${d.status}\n`;
+        });
         const blob = new Blob([csv], { type: 'text/csv' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = 'Production_Batch_Report.csv';
+        a.download = `Office_Report_${new Date().toISOString().split('T')[0]}.csv`;
         a.click();
     }
 </script>
+
 </body>
 </html>
-
