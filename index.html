@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module Traceability System</title>
+    <style>
+        :root {
+            --primary: #004a99;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --bg: #f0f2f5;
+            --text: #2d3436;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container { max-width: 1100px; margin: auto; }
+
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 20px;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border-bottom: 4px solid var(--primary);
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+        }
+
+        .scanner-card {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+
+        label { display: block; font-weight: bold; margin-bottom: 8px; font-size: 0.9em; }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 2px solid #dfe6e9;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 15px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-download {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .feedback {
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 6px;
+            display: none;
+            font-weight: bold;
+        }
+
+        .error { background: #fab1a0; color: #ae3c33; display: block; border-left: 5px solid var(--danger); }
+        .success { background: #b8e994; color: #3b7d23; display: block; border-left: 5px solid var(--success); }
+
+        .table-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { text-align: left; padding: 12px; background: #f8f9fa; border-bottom: 2px solid #dee2e6; }
+        td { padding: 12px; border-bottom: 1px solid #eee; }
+        
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            background: #e9ecef;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div>
+            <h2 style="margin:0;">Unit Testing Tracker</h2>
+            <span>Traceability System</span>
+        </div>
+        <button onclick="downloadCSV()" class="btn-download">Download CSV Report</button>
+    </header>
+
+    <div class="status-summary">
+        <div class="stat-card">
+            <label>Total Units</label>
+            <div id="count-total" style="font-size: 24px; font-weight: bold;">0</div>
+        </div>
+        <div class="stat-card" style="border-color: var(--warning);">
+            <label>In Testing</label>
+            <div id="count-testing" style="font-size: 24px; font-weight: bold;">0</div>
+        </div>
+        <div class="stat-card" style="border-color: var(--success);">
+            <label>Completed</label>
+            <div id="count-ready" style="font-size: 24px; font-weight: bold;">0</div>
+        </div>
+    </div>
+
+    <div class="main-grid">
+        <div class="scanner-card">
+            <h3>Unit Check-In</h3>
+            <label for="snInput">SERIAL NUMBER</label>
+            <input type="text" id="snInput" placeholder="Scan here..." autofocus>
+
+            <label for="stageSelect">TEST STAGE</label>
+            <select id="stageSelect">
+                <option value="0">01. Receiving</option>
+                <option value="1">02. Programming</option>
+                <option value="2">03. Group A (Pre-Vib 1)</option>
+                <option value="3">04. Vibration 1</option>
+                <option value="4">05. Group A (Post-Vib 1)</option>
+                <option value="5">06. 24h Thermal Cycling</option>
+                <option value="6">07. Group A (Post-Thermal)</option>
+                <option value="7">08. Vibration 2</option>
+                <option value="8">09. Group A (Post-Vib 2)</option>
+                <option value="9">10. ATP Test</option>
+                <option value="10">11. Offer to Engineering</option>
+            </select>
+
+            <button class="btn-submit" onclick="processUnit()">SUBMIT RESULT</button>
+            <div id="feedback" class="feedback"></div>
+            <button onclick="clearAllData()" style="margin-top: 50px; background: none; border: none; color: #ccc; cursor: pointer; font-size: 10px;">Clear Database</button>
+        </div>
+
+        <div class="table-container">
+            <h3>Live Unit Data</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Serial No.</th>
+                        <th>Current Stage</th>
+                        <th>History</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="unitTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    const STAGES = [
+        "Receiving", "Programming", "Group A (1)", "Vibration 1", 
+        "Group A (2)", "Thermal Cycling", "Group A (3)", 
+        "Vibration 2", "Group A (4)", "ATP Test", "Offered to Engineering"
+    ];
+
+    let unitDatabase = JSON.parse(localStorage.getItem('testing_db')) || {};
+
+    // Run this when the page opens
+    window.onload = updateTable;
+
+    function processUnit() {
+        const snInput = document.getElementById('snInput');
+        const stageIdx = parseInt(document.getElementById('stageSelect').value);
+        const sn = snInput.value.trim().toUpperCase();
+
+        if (!sn) {
+            showFeedback("Please enter a Serial Number", "error");
+            return;
+        }
+
+        if (!unitDatabase[sn]) {
+            if (stageIdx === 0) {
+                unitDatabase[sn] = { currentStage: 0, history: [STAGES[0]], time: new Date().toLocaleString() };
+                showFeedback("Unit Registered", "success");
+            } else {
+                showFeedback("Error: New units must start at Receiving", "error");
+                return;
+            }
+        } else {
+            const lastIdx = unitDatabase[sn].currentStage;
+            if (stageIdx === lastIdx + 1) {
+                unitDatabase[sn].currentStage = stageIdx;
+                unitDatabase[sn].history.push(STAGES[stageIdx]);
+                unitDatabase[sn].time = new Date().toLocaleString();
+                showFeedback("Stage Updated", "success");
+            } else if (stageIdx <= lastIdx) {
+                showFeedback("Error: Stage already completed", "error");
+                return;
+            } else {
+                showFeedback(`Sequence Breach! Next step is: ${STAGES[lastIdx+1]}`, "error");
+                return;
+            }
+        }
+
+        saveData();
+        updateTable();
+        snInput.value = "";
+        snInput.focus();
+    }
+
+    function updateTable() {
+        const tbody = document.getElementById('unitTableBody');
+        tbody.innerHTML = "";
+        const units = Object.entries(unitDatabase).reverse();
+
+        let total = 0, ready = 0;
+
+        units.forEach(([sn, data]) => {
+            total++;
+            if (data.currentStage === 10) ready++;
+            
+            const row = `<tr>
+                <td><strong>${sn}</strong></td>
+                <td><span class="badge">${STAGES[data.currentStage]}</span></td>
+                <td><small>${data.history.join(" → ")}</small></td>
+                <td>${data.currentStage === 10 ? "✅ Done" : "⏳ Testing"}</td>
+            </tr>`;
+            tbody.innerHTML += row;
+        });
+
+        document.getElementById('count-total').innerText = total;
+        document.getElementById('count-ready').innerText = ready;
+        document.getElementById('count-testing').innerText = total - ready;
+    }
+
+    function showFeedback(msg, type) {
+        const f = document.getElementById('feedback');
+        f.innerText = msg;
+        f.className = `feedback ${type}`;
+        if (type === "success") setTimeout(() => f.className = "feedback", 3000);
+    }
+
+    function downloadCSV() {
+        let csv = "Serial Number,Stage,History,Status\n";
+        Object.entries(unitDatabase).forEach(([sn, d]) => {
+            csv += `${sn},${STAGES[d.currentStage]},"${d.history.join(" | ")}",${d.currentStage === 10 ? "Ready" : "Testing"}\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.setAttribute('href', url);
+        a.setAttribute('download', 'Report.csv');
+        a.click();
+    }
+
+    function saveData() { localStorage.setItem('testing_db', JSON.stringify(unitDatabase)); }
+    
+    function clearAllData() {
+        if(confirm("Delete all records?")) {
+            unitDatabase = {};
+            saveData();
+            updateTable();
+        }
+    }
+</script>
+</body>
+</html>
