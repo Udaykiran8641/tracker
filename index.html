@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Module Traceability System</title>
+    <title>Office-Sync Unit Traceability</title>
     <style>
         :root {
             --primary: #004a99;
@@ -126,6 +126,8 @@
             background: #e9ecef;
             font-weight: bold;
         }
+
+        .sync-indicator { font-size: 12px; color: #636e72; text-align: right; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -133,10 +135,10 @@
 <div class="container">
     <header>
         <div>
-            <h2 style="margin:0;">Unit Testing Tracker</h2>
-            <span>Traceability System</span>
+            <h2 style="margin:0;">Office-Sync Tracker</h2>
+            <span>Connected to Shared Google Database</span>
         </div>
-        <button onclick="downloadCSV()" class="btn-download">Download CSV Report</button>
+        <button onclick="downloadCSV()" class="btn-download">Download Backup CSV</button>
     </header>
 
     <div class="status-summary">
@@ -175,13 +177,13 @@
                 <option value="10">11. Offer to Engineering</option>
             </select>
 
-            <button class="btn-submit" onclick="processUnit()">SUBMIT RESULT</button>
+            <button id="submitBtn" class="btn-submit" onclick="processUnit()">SUBMIT TO CLOUD</button>
             <div id="feedback" class="feedback"></div>
-            <button onclick="clearAllData()" style="margin-top: 50px; background: none; border: none; color: #ccc; cursor: pointer; font-size: 10px;">Clear Database</button>
+            <div id="syncTime" class="sync-indicator">Last Synced: Never</div>
         </div>
 
         <div class="table-container">
-            <h3>Live Unit Data</h3>
+            <h3>Live Office-Wide Data</h3>
             <table>
                 <thead>
                     <tr>
@@ -198,55 +200,98 @@
 </div>
 
 <script>
+    // --- CONFIGURATION ---
+    const APP_URL = "PASTE_YOUR_GOOGLE_SCRIPT_URL_HERE"; 
+    
     const STAGES = [
         "Receiving", "Programming", "Group A (1)", "Vibration 1", 
         "Group A (2)", "Thermal Cycling", "Group A (3)", 
         "Vibration 2", "Group A (4)", "ATP Test", "Offered to Engineering"
     ];
 
-    let unitDatabase = JSON.parse(localStorage.getItem('testing_db')) || {};
+    let unitDatabase = {};
 
-    // Run this when the page opens
-    window.onload = updateTable;
+    // Initial load from Cloud
+    window.onload = refreshFromCloud;
 
-    function processUnit() {
+    // Auto-refresh from cloud every 20 seconds
+    setInterval(refreshFromCloud, 20000);
+
+    async function processUnit() {
         const snInput = document.getElementById('snInput');
+        const submitBtn = document.getElementById('submitBtn');
         const stageIdx = parseInt(document.getElementById('stageSelect').value);
         const sn = snInput.value.trim().toUpperCase();
 
-        if (!sn) {
-            showFeedback("Please enter a Serial Number", "error");
-            return;
+        if (!sn) return showFeedback("Enter Serial Number", "error");
+
+        // Sequence Validation
+        let lastIdx = unitDatabase[sn] ? unitDatabase[sn].currentStage : -1;
+        if (lastIdx === -1 && stageIdx !== 0) {
+            return showFeedback("Error: New units start at Receiving", "error");
+        } else if (lastIdx !== -1 && stageIdx !== lastIdx + 1) {
+            return showFeedback(`Sequence Breach! Next: ${STAGES[lastIdx+1]}`, "error");
+        } else if (lastIdx !== -1 && stageIdx <= lastIdx) {
+            return showFeedback("Already Completed", "error");
         }
 
-        if (!unitDatabase[sn]) {
-            if (stageIdx === 0) {
-                unitDatabase[sn] = { currentStage: 0, history: [STAGES[0]], time: new Date().toLocaleString() };
-                showFeedback("Unit Registered", "success");
-            } else {
-                showFeedback("Error: New units must start at Receiving", "error");
-                return;
-            }
-        } else {
-            const lastIdx = unitDatabase[sn].currentStage;
-            if (stageIdx === lastIdx + 1) {
-                unitDatabase[sn].currentStage = stageIdx;
-                unitDatabase[sn].history.push(STAGES[stageIdx]);
-                unitDatabase[sn].time = new Date().toLocaleString();
-                showFeedback("Stage Updated", "success");
-            } else if (stageIdx <= lastIdx) {
-                showFeedback("Error: Stage already completed", "error");
-                return;
-            } else {
-                showFeedback(`Sequence Breach! Next step is: ${STAGES[lastIdx+1]}`, "error");
-                return;
-            }
-        }
+        // Prepare History
+        let historyArray = unitDatabase[sn] ? [...unitDatabase[sn].history] : [];
+        historyArray.push(STAGES[stageIdx]);
+        
+        const payload = {
+            sn: sn,
+            stage: STAGES[stageIdx],
+            history: historyArray.join(" → "),
+            status: stageIdx === 10 ? "✅ Done" : "⏳ Testing"
+        };
 
-        saveData();
-        updateTable();
-        snInput.value = "";
-        snInput.focus();
+        // UI Feedback
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Syncing...";
+        showFeedback("Connecting to Google Sheets...", "success");
+
+        try {
+            await fetch(APP_URL, {
+                method: "POST",
+                mode: "no-cors", // Required for Google Scripts
+                body: JSON.stringify(payload)
+            });
+            
+            showFeedback("Success: Cloud Updated", "success");
+            snInput.value = "";
+            snInput.focus();
+            
+            // Immediately refresh to show own update
+            setTimeout(refreshFromCloud, 1000); 
+        } catch (err) {
+            showFeedback("Cloud Error: Check Internet", "error");
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerText = "SUBMIT TO CLOUD";
+        }
+    }
+
+    async function refreshFromCloud() {
+        try {
+            const response = await fetch(APP_URL);
+            const cloudData = await response.json();
+            
+            unitDatabase = {};
+            // Start at 1 to skip headers
+            for (let i = 1; i < cloudData.length; i++) {
+                const row = cloudData[i];
+                unitDatabase[row[0]] = {
+                    currentStage: STAGES.indexOf(row[1]),
+                    history: row[2].split(" → "),
+                    status: row[3]
+                };
+            }
+            updateTable();
+            document.getElementById('syncTime').innerText = "Last Synced: " + new Date().toLocaleTimeString();
+        } catch (e) {
+            console.log("Auto-sync failed. Offline mode.");
+        }
     }
 
     function updateTable() {
@@ -258,13 +303,14 @@
 
         units.forEach(([sn, data]) => {
             total++;
-            if (data.currentStage === 10) ready++;
+            const isDone = data.currentStage === 10;
+            if (isDone) ready++;
             
             const row = `<tr>
                 <td><strong>${sn}</strong></td>
                 <td><span class="badge">${STAGES[data.currentStage]}</span></td>
                 <td><small>${data.history.join(" → ")}</small></td>
-                <td>${data.currentStage === 10 ? "✅ Done" : "⏳ Testing"}</td>
+                <td>${isDone ? "✅ Done" : "⏳ Testing"}</td>
             </tr>`;
             tbody.innerHTML += row;
         });
@@ -278,31 +324,21 @@
         const f = document.getElementById('feedback');
         f.innerText = msg;
         f.className = `feedback ${type}`;
-        if (type === "success") setTimeout(() => f.className = "feedback", 3000);
+        if (type === "success") setTimeout(() => f.className = "feedback", 4000);
     }
 
     function downloadCSV() {
         let csv = "Serial Number,Stage,History,Status\n";
         Object.entries(unitDatabase).forEach(([sn, d]) => {
-            csv += `${sn},${STAGES[d.currentStage]},"${d.history.join(" | ")}",${d.currentStage === 10 ? "Ready" : "Testing"}\n`;
+            csv += `${sn},${STAGES[d.currentStage]},"${d.history.join(" | ")}",${d.status}\n`;
         });
         const blob = new Blob([csv], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.setAttribute('href', url);
-        a.setAttribute('download', 'Report.csv');
+        a.href = URL.createObjectURL(blob);
+        a.download = `Office_Report_${new Date().toISOString().split('T')[0]}.csv`;
         a.click();
     }
-
-    function saveData() { localStorage.setItem('testing_db', JSON.stringify(unitDatabase)); }
-    
-    function clearAllData() {
-        if(confirm("Delete all records?")) {
-            unitDatabase = {};
-            saveData();
-            updateTable();
-        }
-    }
 </script>
+
 </body>
 </html>
